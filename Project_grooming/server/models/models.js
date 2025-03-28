@@ -3,17 +3,16 @@ const {DataTypes} = require('sequelize')
 
 const Appointment = sequelize.define("Appointment", {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    client_id: { type: DataTypes.INTEGER, allowNull: false },
-    employee_id: { type: DataTypes.INTEGER, allowNull: false },
-    date: { type: DataTypes.DATE, allowNull: false },
-    status: { type: DataTypes.STRING, allowNull: false, defaultValue: "запланировано" },
-    schedule_id: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'Schedules', key: 'id' } },
+    date_time: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    status: { 
+        type: DataTypes.ENUM("запланировано", "подтверждено", "завершено"), 
+        allowNull: false, 
+        defaultValue: "запланировано" 
+      },
   })
 
-  const AppointmentService = sequelize.define("Appointment_services", {
+  const AppointmentService = sequelize.define("Appointment_service", {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    appointment_id: { type: DataTypes.INTEGER, allowNull: false },
-    service_id: { type: DataTypes.INTEGER, allowNull: false },
   })
   const Client = sequelize.define("Client", {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -36,8 +35,7 @@ const Appointment = sequelize.define("Appointment", {
 
   const Schedule = sequelize.define("Schedule", {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    employee_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: Employee, key: 'id' } },
-    date: { type: DataTypes.DATE, allowNull: false },
+    date_time: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   })
 
   const Service = sequelize.define("Service", {
