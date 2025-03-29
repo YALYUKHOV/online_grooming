@@ -30,7 +30,7 @@ const Appointment = sequelize.define("Appointment", {
     position: { type: DataTypes.STRING, allowNull: false },
     phone: { type: DataTypes.STRING, allowNull: false,unique: true },
     email: { type: DataTypes.STRING, allowNull: false,unique: true },
-    password: {type: DataTypes.STRING}
+    // password: {type: DataTypes.STRING}
   })
 
   const Schedule = sequelize.define("Schedule", {
@@ -43,6 +43,7 @@ const Appointment = sequelize.define("Appointment", {
     name: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.STRING },
     price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    img: { type: DataTypes.STRING, allowNull: true },
   })
 
 

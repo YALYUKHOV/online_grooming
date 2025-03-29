@@ -1,52 +1,36 @@
-const Employee = require("../models/Employee");
+const {Employee} = require('../models/models');
+const ApiError = require('../error/ApiError');
 
-const getEmployees = async (req, res) => {
-  try {
+class EmployeeController{
+  async create(req, res) {
+    const { name, position, phone, email } = req.body;
+    const employee = await Employee.create({ name, position, phone, email });
+    return res.json(employee);
+  }
+
+  async getAll(req, res) {
     const employees = await Employee.findAll();
-    res.json(employees);
-  } catch (error) {
-    res.status(500).json({ error: "Ошибка сервера" });
+    return res.json(employees);
   }
-};
 
-const createEmployee = async (req, res) => {
-  try {
-    const newEmployee = await Employee.create(req.body);
-    res.status(201).json(newEmployee);
-  } catch (error) {
-    res.status(500).json({ error: "Ошибка создания сотрудника" });
+  async deleteOne(req, res) {
+    const { id } = req.params;
+    const employee = await Employee.destroy({ where: { id } });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    return res.json({ message: 'Employee deleted successfully' });
   }
-};
 
-const updateEmployee = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const [updated] = await Employee.update(req.body, { where: { id } });
-  
-      if (updated) {
-        const updatedEmployee = await Employee.findByPk(id);
-        res.json(updatedEmployee);
-      } else {
-        res.status(404).json({ error: "Сотрудник не найден" });
-      }
-    } catch (error) {
-      res.status(500).json({ error: "Ошибка обновления сотрудника" });
+  async updateOne(req, res) {
+    const { id } = req.params;
+    const { name, position, phone, email } = req.body;
+    const employee = await Employee.update({ name, position, phone, email }, { where: { id } });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
     }
-  };
-  
-  const deleteEmployee = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const deleted = await Employee.destroy({ where: { id } });
-  
-      if (deleted) {
-        res.json({ message: "Сотрудник удален" });
-      } else {
-        res.status(404).json({ error: "Сотрудник не найден" });
-      }
-    } catch (error) {
-      res.status(500).json({ error: "Ошибка удаления сотрудника" });
-    }
-  };
+    return res.json({ message: 'Employee updated successfully' });
+  }
+}
 
-  module.exports = { getEmployees, createEmployee, updateEmployee, deleteEmployee };
+module.exports = new EmployeeController();

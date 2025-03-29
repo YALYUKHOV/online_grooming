@@ -1,76 +1,62 @@
-const Service = require('../models/Service');
+const {Service} = require('../models/models');
+const ApiError = require('../error/ApiError');
+const uuid = require('uuid');
+const path = require('path');
 
-exports.getAllServices = async (req, res) => {
-  try {
-    const services = await Service.findAll();
-    res.status(200).json(services);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching services', error });
-  }
-};
 
-exports.createService = async (req, res) => {
-  const { name, description, price } = req.body;
+class ServiceController{
+  async create(req, res, next) {
+    try{
+      const { name, description, price } = req.body;
+      const{ img } = req.files;
+      let fileName = uuid.v4() + ".jpg";
+      // перемещаем файл в папку static, resolve адаптирует указанный путь к ОС
+      //дирнейм - путь к текущему файлу, в данном случае к контроллеру
+      //две точки возврат на директорию назад 
+      //статик - папка, куда мы перемещаем файл
+      img.mv(path.resolve(__dirname, '..', 'static', fileName));
+  
+      const device = await Service.create({ name, description, price, img: fileName });
+  
+      return res.json(device);
 
-  try {
-    const newService = await Service.create({ name, description, price });
-    res.status(201).json(newService);
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating service', error });
-  }
-};
-
-exports.getServiceById = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const service = await Service.findByPk(id);
-    if (service) {
-      res.status(200).json(service);
-    } else {
-      res.status(404).json({ message: 'Service not found' });
+    }catch (e) {
+      next(ApiError.badRequest(e.message))
     }
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching service', error });
-  }
-};
-
-exports.updateService = async (req, res) => {
-  const { id } = req.params;
-  const { name, description, price } = req.body;
-
-  try {
-    const service = await Service.findByPk(id);
-
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-
-    service.name = name;
-    service.description = description;
-    service.price = price;
     
-    await service.save();
-    res.status(200).json(service);
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating service', error });
+
   }
-};
 
+  async getAll(req, res) {
+    const {name} = req.query;
+    let services;
+    if(name){
+      services = await Service.findAll({where: {name}})
+    }
+    if (!name){
+      services = await Service.findAll()
+    }
+    return res.json(services)
+  }
 
-exports.deleteService = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const service = await Service.findByPk(id);
-
+  async deleteOne(req, res) {
+    const { id } = req.params;
+    const service = await Service.destroy({ where: { id } });
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
-
-    await service.destroy();
-    res.status(200).json({ message: 'Service deleted' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error deleting service', error });
+    return res.json({ message: 'Service deleted successfully' });
   }
-};
+
+  async updateOne(req, res) {
+    const { id } = req.params;
+    const { name, description, price } = req.body;
+    const service = await Service.update({ name, description, price }, { where: { id } });
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    return res.json({ message: 'Service updated successfully' });
+  }
+}
+
+module.exports = new ServiceController();

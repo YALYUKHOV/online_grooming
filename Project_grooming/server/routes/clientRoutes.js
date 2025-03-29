@@ -1,11 +1,10 @@
-const express = require("express");
-const clientController = require("../controllers/clientController");
-const router = express.Router();
+const Router = require('express');
+const router = Router();
+const clientController = require('../controllers/clientController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.post("/", clientController.createClient);
-router.get("/", clientController.getAllClients);
-router.get("/:id", clientController.getClientById);
-router.put("/:id", clientController.updateClient);
-router.delete("/:id", clientController.deleteClient);
+router.post('/registration', clientController.registration);
+router.post('/login', clientController.login);
+router.get('/auth', authMiddleware,  clientController.check);
 
 module.exports = router;
