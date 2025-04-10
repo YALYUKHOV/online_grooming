@@ -1,0 +1,99 @@
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin-top: -70px;
+    background-color: #f5f5f5;
+}
+
+.auth-form {
+    width: 500px;
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.auth-form h2 {
+    text-align: center;
+    color: #8B4513;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #DEB887;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.form-group input:focus {
+    border-color: #A0522D;
+    box-shadow: 0 0 0 2px rgba(160, 82, 45, 0.2);
+}
+
+.form-group input::placeholder {
+    color: #999;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #A0522D;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    outline: 2px solid transparent;
+}
+
+.submit-button:hover {
+    background-color: #8B4513;
+    outline: 2px solid #DEB887;
+}
+
+.submit-button:active {
+    transform: scale(0.98);
+}
+
+/* Стили для валидации */
+.form-group input:invalid {
+    border-color: #ff6b6b;
+}
+
+.form-group input:invalid:focus {
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+}
+
+/* Стили для телефона */
+input[type="tel"] {
+    letter-spacing: 1px;
+}
+
+/* Анимация при фокусе */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(160, 82, 45, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(160, 82, 45, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(160, 82, 45, 0);
+    }
+}
+
+.form-group input:focus {
+    animation: pulse 1.5s infinite;
+} 

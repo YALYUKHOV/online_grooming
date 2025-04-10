@@ -1,0 +1,116 @@
+.navbar {
+    background-color: white;
+    padding: 15px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.leftSection {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    text-decoration: none;
+    color: #8B4513;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.logo:hover {
+    color: #A0522D;
+}
+
+.navButton {
+    text-decoration: none;
+    color: #8B4513;
+    padding: 8px 16px;
+    border-radius: 5px;
+    outline: 2px solid transparent;
+    transition: outline 0.2s ease;
+}
+
+.navButton:hover {
+    outline: 2px solid #F5DEB3;
+}
+
+.rightSection {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.userContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background-color: #F5DEB3;
+    border-radius: 5px;
+    outline: 2px solid transparent;
+    transition: outline 0.2s ease;
+}
+
+.userContainer:hover {
+    outline: 2px solid #DEB887;
+}
+
+.userName {
+    color: #8B4513;
+    font-weight: 500;
+}
+
+.logoutButton {
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    background-color: #A0522D;
+    color: white;
+    border-radius: 5px;
+    outline: 2px solid transparent;
+    transition: outline 0.2s ease;
+}
+
+.logoutButton:hover {
+    outline: 2px solid #8B4513;
+}
+
+.loginButton {
+    text-decoration: none;
+    padding: 8px 16px;
+    background-color: #A0522D;
+    color: white;
+    border-radius: 5px;
+    outline: 2px solid transparent;
+    transition: outline 0.2s ease;
+}
+
+.loginButton:hover {
+    outline: 2px solid #8B4513;
+}
+
+.registerButton {
+    text-decoration: none;
+    padding: 8px 16px;
+    background-color: #F5DEB3;
+    color: #8B4513;
+    border-radius: 5px;
+    outline: 2px solid transparent;
+    transition: outline 0.2s ease;
+}
+
+.registerButton:hover {
+    outline: 2px solid #DEB887;
+} 

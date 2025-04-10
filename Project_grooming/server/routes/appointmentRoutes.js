@@ -1,12 +1,11 @@
 const Router = require('express');
 const router = Router();
 const appointmentController = require('../controllers/appointmentController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-
-
-router.post('/', appointmentController.create)
-router.get('/', appointmentController.getAll)
-router.delete('/:id', appointmentController.deleteOne)
-router.put('/:id', appointmentController.updateOne)
+router.post('/', authMiddleware, appointmentController.create);
+router.get('/', authMiddleware, appointmentController.getAll);
+router.delete('/:id', authMiddleware, appointmentController.deleteOne);
+router.put('/:id', authMiddleware, appointmentController.updateOne);
 
 module.exports = router;
