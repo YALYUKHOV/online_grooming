@@ -19,6 +19,11 @@ class AppointmentController{
         return next(ApiError.badRequest('Расписание не найдено'));
       }
 
+      // Проверяем, что выбранный мастер соответствует мастеру в расписании
+      if (schedule.employee_id !== employee_id) {
+        return next(ApiError.badRequest('Выбранный мастер не соответствует мастеру в расписании'));
+      }
+
       // Проверяем существование услуг
       const services = await Service.findAll({
         where: {
@@ -70,6 +75,7 @@ class AppointmentController{
 
       return res.json(createdAppointment);
     } catch (e) {
+      console.error('Ошибка при создании записи:', e);
       return next(ApiError.internal(e.message));
     }
   }
@@ -88,14 +94,77 @@ class AppointmentController{
     return res.json({ message: 'Appointment deleted successfully' });
   }
 
-  async updateOne(req, res) {
-    const { id } = req.params;
-    const { clientId, employeeId, scheduleId, serviceId, status } = req.body;
-    const appointment = await Appointment.update({ clientId, employeeId, scheduleId, serviceId, status }, { where: { id } });
-    if (!appointment) {
-      return res.status(404).json({ message: 'Appointment not found' });
+  async updateOne(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { date_time, employee_id, schedule_id, service_ids, status } = req.body;
+      const client_id = req.user.id; // Получаем ID клиента из токена
+
+      // Проверяем существование записи
+      const appointment = await Appointment.findByPk(id);
+      if (!appointment) {
+        return next(ApiError.notFound('Запись не найдена'));
+      }
+
+      // Проверяем, что клиент пытается изменить свою запись
+      if (appointment.client_id !== client_id) {
+        return next(ApiError.forbidden('Нельзя изменять записи других клиентов'));
+      }
+
+      // Проверяем существование мастера
+      const employee = await Employee.findByPk(employee_id);
+      if (!employee) {
+        return next(ApiError.badRequest('Мастер не найден'));
+      }
+
+      // Проверяем существование расписания
+      const schedule = await Schedule.findByPk(schedule_id);
+      if (!schedule) {
+        return next(ApiError.badRequest('Расписание не найдено'));
+      }
+
+      // Проверяем, что выбранный мастер соответствует мастеру в расписании
+      if (schedule.employee_id !== employee_id) {
+        return next(ApiError.badRequest('Выбранный мастер не соответствует мастеру в расписании'));
+      }
+
+      // Обновляем запись
+      await appointment.update({
+        date_time,
+        employee_id,
+        schedule_id,
+        status
+      });
+
+      // Если указаны услуги, обновляем их
+      if (service_ids) {
+        const services = await Service.findAll({
+          where: {
+            id: service_ids
+          }
+        });
+        await appointment.setServices(services);
+      }
+
+      // Получаем обновленную запись
+      const updatedAppointment = await Appointment.findByPk(id, {
+        include: [
+          {
+            model: Service,
+            through: { attributes: [] }
+          },
+          {
+            model: Employee,
+            attributes: ['id', 'name', 'position']
+          }
+        ]
+      });
+
+      return res.json(updatedAppointment);
+    } catch (e) {
+      console.error('Ошибка при обновлении записи:', e);
+      return next(ApiError.internal(e.message));
     }
-    return res.json({ message: 'Appointment updated successfully' });
   }
 }
 

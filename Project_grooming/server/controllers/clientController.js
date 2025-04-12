@@ -1,4 +1,4 @@
-const { Client, Appointment, Service, Employee, AppointmentService } = require('../models/models');
+const { Client, Appointment, Service, Employee, AppointmentService, InvalidToken } = require('../models/models');
 const ApiError = require('../error/ApiError');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -73,7 +73,14 @@ class UserController{
 
   async logout(req, res, next) {
     try {
-      // В реальном приложении здесь должна быть логика отзыва токена
+      const token = req.headers.authorization.split(" ")[1];
+      
+      // Добавляем токен в список недействительных
+      await InvalidToken.create({
+        token,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 часа
+      });
+
       return res.json({ message: 'Вы успешно вышли из системы' });
     } catch (e) {
       return next(ApiError.internal(e.message));

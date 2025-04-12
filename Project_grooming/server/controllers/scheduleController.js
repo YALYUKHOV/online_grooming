@@ -1,11 +1,23 @@
-const {Schedule} = require('../models/models');
+const {Schedule, Employee} = require('../models/models');
 const ApiError = require('../error/ApiError');
 
 class ScheduleController{
-    async create(req, res) {
-      const { employeeId, date_time } = req.body;
-      const schedule = await Schedule.create({ employeeId, date_time });
-      return res.json(schedule);
+    async create(req, res, next) {
+      try {
+        const { date_time, employee_id } = req.body;
+
+        // Проверяем существование мастера
+        const employee = await Employee.findByPk(employee_id);
+        if (!employee) {
+          return next(ApiError.badRequest('Мастер не найден'));
+        }
+
+        const schedule = await Schedule.create({ date_time, employee_id });
+        return res.json(schedule);
+      } catch (e) {
+        console.error('Ошибка при создании записи в расписании:', e);
+        return next(ApiError.internal(e.message));
+      }
     }
   
     async getAll(req, res) {
@@ -24,8 +36,8 @@ class ScheduleController{
   
     async updateOne(req, res) {
       const { id } = req.params;
-      const { employeeId, date_time } = req.body;
-      const schedule = await Schedule.update({ employeeId, date_time }, { where: { id } });
+      const { date_time, employee_id } = req.body;
+      const schedule = await Schedule.update({ date_time, employee_id }, { where: { id } });
       if (!schedule) {
         return res.status(404).json({ message: 'Schedule not found' });
       }

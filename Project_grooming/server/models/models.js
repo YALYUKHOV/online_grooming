@@ -36,6 +36,8 @@ const Appointment = sequelize.define("Appointment", {
   const Schedule = sequelize.define("Schedule", {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     date_time: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  }, {
+    timestamps: true
   })
 
   const Service = sequelize.define("Service", {
@@ -46,6 +48,11 @@ const Appointment = sequelize.define("Appointment", {
     img: { type: DataTypes.STRING, allowNull: true },
   })
 
+  const InvalidToken = sequelize.define("InvalidToken", {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    token: { type: DataTypes.STRING, allowNull: false, unique: true },
+    expiresAt: { type: DataTypes.DATE, allowNull: false }
+  })
 
 Employee.hasMany(Appointment, { foreignKey: "employee_id", onDelete: "CASCADE" });
 Appointment.belongsTo(Employee, { foreignKey: "employee_id" });
@@ -69,5 +76,6 @@ module.exports = {
     Client,
     Employee,
     Schedule,
-    Service
+    Service,
+    InvalidToken
 }

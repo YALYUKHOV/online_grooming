@@ -10,5 +10,6 @@ router.get('/auth', authMiddleware, clientController.check);
 router.get('/appointments/:id', authMiddleware, clientController.getClientAppointments);
 router.post('/change-password', authMiddleware, validateChangePassword, clientController.changePassword);
 router.post('/logout', authMiddleware, clientController.logout);
+router.post('/reset-password', clientController.resetPassword);
 
 module.exports = router;
