@@ -54,6 +54,13 @@ const Appointment = sequelize.define("Appointment", {
     expiresAt: { type: DataTypes.DATE, allowNull: false }
   })
 
+const RefreshToken = sequelize.define('refresh_token', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    token: {type: DataTypes.STRING, allowNull: false},
+    createdAt: {type: DataTypes.DATE, allowNull: false},
+    clientId: {type: DataTypes.INTEGER, allowNull: false}
+})
+
 Employee.hasMany(Appointment, { foreignKey: "employee_id", onDelete: "CASCADE" });
 Appointment.belongsTo(Employee, { foreignKey: "employee_id" });
 
@@ -69,6 +76,8 @@ Service.belongsToMany(Appointment, { through: AppointmentService, foreignKey: "s
 Client.hasMany(Appointment, { foreignKey: "client_id", onDelete: "CASCADE" });
 Appointment.belongsTo(Client, { foreignKey: "client_id" });
 
+RefreshToken.belongsTo(Client)
+Client.hasMany(RefreshToken)
 
 module.exports = {
     Appointment,
@@ -77,5 +86,6 @@ module.exports = {
     Employee,
     Schedule,
     Service,
-    InvalidToken
+    InvalidToken,
+    RefreshToken
 }

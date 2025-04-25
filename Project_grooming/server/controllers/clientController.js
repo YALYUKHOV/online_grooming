@@ -1,10 +1,11 @@
-const { Client, Appointment, Service, Employee, AppointmentService, InvalidToken } = require('../models/models');
+const { Client, Appointment, Service, Employee, AppointmentService, InvalidToken, RefreshToken } = require('../models/models');
 const ApiError = require('../error/ApiError');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 
-const generateJwt = (id, name, email, phone) => {
+// Создает access токен для доступа к защищенным ресурсам (действует 24 часа)
+const generateAccessToken = (id, name, email, phone) => {
   return jwt.sign(
     { id, name, email, phone },
     process.env.SECRET_KEY,
@@ -12,7 +13,17 @@ const generateJwt = (id, name, email, phone) => {
   );
 }
 
+// Создает refresh токен для обновления access токена (действует 7 дней)
+const generateRefreshToken = () => {
+  return jwt.sign(
+    {},
+    process.env.REFRESH_SECRET_KEY,
+    { expiresIn: '7d' }
+  );
+}
+
 class UserController{
+  // Регистрация нового пользователя в системе
   async registration(req, res, next) {
     const { phone, name, email, password } = req.body;
     if (!name || !email || !password) {
@@ -24,10 +35,23 @@ class UserController{
     }
     const hashPassword = await bcrypt.hash(password, 5);
     const user = await Client.create({ name, email, phone, password: hashPassword });
-    const token = generateJwt(user.id, user.name, user.email, user.phone);
-    return res.json({token});
+    
+    const accessToken = generateAccessToken(user.id, user.name, user.email, user.phone);
+    const refreshToken = generateRefreshToken();
+    
+    await RefreshToken.create({
+      token: refreshToken,
+      createdAt: new Date(),
+      clientId: user.id
+    });
+
+    return res.json({
+      accessToken,
+      refreshToken
+    });
   }
 
+  // Вход пользователя в систему
   async login(req, res, next) {
     const { email, password } = req.body;
     const user = await Client.findOne({ where: { email } });
@@ -38,15 +62,29 @@ class UserController{
     if (!comparePassword) {
       return next(ApiError.internal('Указан неверный пароль'));
     }
-    const token = generateJwt(user.id, user.name, user.email, user.phone);
-    return res.json({token});
+    
+    const accessToken = generateAccessToken(user.id, user.name, user.email, user.phone);
+    const refreshToken = generateRefreshToken();
+    
+    await RefreshToken.create({
+      token: refreshToken,
+      createdAt: new Date(),
+      clientId: user.id
+    });
+
+    return res.json({
+      accessToken,
+      refreshToken
+    });
   }
 
+  // Проверка авторизации пользователя
   async check(req, res, next) {
-    const token = generateJwt(req.user.id, req.user.name, req.user.email, req.user.phone);
+    const token = generateAccessToken(req.user.id, req.user.name, req.user.email, req.user.phone);
     return res.json({token});
   }
 
+  // Изменение пароля пользователя
   async changePassword(req, res, next) {
     try {
       const { oldPassword, newPassword } = req.body;
@@ -71,14 +109,22 @@ class UserController{
     }
   }
 
+  // Выход пользователя из системы
   async logout(req, res, next) {
     try {
-      const token = req.headers.authorization.split(" ")[1];
+      const { refreshToken } = req.body;
       
-      // Добавляем токен в список недействительных
+      // Удаляем refresh токен из базы
+      if (refreshToken) {
+        await RefreshToken.destroy({
+          where: { token: refreshToken }
+        });
+      }
+
+      // Добавляем access токен в список недействительных
       await InvalidToken.create({
-        token,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 часа
+        token: req.headers.authorization.split(' ')[1],
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
       });
 
       return res.json({ message: 'Вы успешно вышли из системы' });
@@ -87,6 +133,7 @@ class UserController{
     }
   }
 
+  // Получение всех записей клиента
   async getClientAppointments(req, res, next) {
     try {
       const { id } = req.params;
@@ -96,7 +143,7 @@ class UserController{
         include: [
           {
             model: Service,
-            through: { attributes: [] }, // Исключаем промежуточную таблицу из результата
+            through: { attributes: [] },
           },
           {
             model: Employee,
@@ -116,11 +163,11 @@ class UserController{
     }
   }
 
+  // Сброс пароля пользователя
   async resetPassword(req, res, next) {
     try {
       const { email, phone } = req.body;
       
-      // Находим клиента по email или телефону
       const client = await Client.findOne({
         where: {
           [Op.or]: [
@@ -134,18 +181,64 @@ class UserController{
         return next(ApiError.notFound('Клиент не найден'));
       }
 
-      // Генерируем новый временный пароль
       const tempPassword = Math.random().toString(36).slice(-8);
       const hashPassword = await bcrypt.hash(tempPassword, 5);
 
-      // Обновляем пароль в базе данных
       await client.update({ password: hashPassword });
 
-      // В реальном приложении здесь должна быть отправка email/SMS с новым паролем
-      // Для тестирования просто возвращаем новый пароль
       return res.json({ 
         message: 'Пароль успешно сброшен',
-        tempPassword: tempPassword // В реальном приложении это поле нужно удалить
+        tempPassword: tempPassword
+      });
+    } catch (e) {
+      return next(ApiError.internal(e.message));
+    }
+  }
+
+  // Обновление access и refresh токенов
+  async refresh(req, res, next) {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return next(ApiError.unauthorized('Refresh токен не предоставлен'));
+      }
+
+      const tokenData = await RefreshToken.findOne({
+        where: { token: refreshToken }
+      });
+
+      if (!tokenData) {
+        return next(ApiError.unauthorized('Недействительный refresh токен'));
+      }
+
+      // Проверяем срок действия токена
+      const tokenAge = Date.now() - tokenData.createdAt.getTime();
+      const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 дней
+      
+      if (tokenAge > maxAge) {
+        await tokenData.destroy();
+        return next(ApiError.unauthorized('Refresh токен истек'));
+      }
+
+      const user = await Client.findByPk(tokenData.clientId);
+      if (!user) {
+        return next(ApiError.unauthorized('Пользователь не найден'));
+      }
+
+      // Генерируем новые токены
+      const newAccessToken = generateAccessToken(user.id, user.name, user.email, user.phone);
+      const newRefreshToken = generateRefreshToken();
+
+      // Обновляем refresh токен в базе
+      await tokenData.update({
+        token: newRefreshToken,
+        createdAt: new Date()
+      });
+
+      return res.json({
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
       });
     } catch (e) {
       return next(ApiError.internal(e.message));

@@ -6,6 +6,7 @@ const { validateRegistration, validateLogin, validateChangePassword } = require(
 
 router.post('/registration', validateRegistration, clientController.registration);
 router.post('/login', validateLogin, clientController.login);
+router.post('/refresh', clientController.refresh);
 router.get('/auth', authMiddleware, clientController.check);
 router.get('/appointments/:id', authMiddleware, clientController.getClientAppointments);
 router.post('/change-password', authMiddleware, validateChangePassword, clientController.changePassword);
