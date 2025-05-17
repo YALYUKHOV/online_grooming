@@ -1,16 +1,22 @@
 import React, { useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { MAIN_ROUTE, LOGIN_ROUTE, REGISTRATION_ROUTE, ADMIN_ROUTE, SERVICE_ROUTE, APPOINTMENT_ROUTE } from '../utils/consts';
-import { Context } from '../index';
+import { Context } from '../context';
+import { userAPI } from '../http/userAPI';
 import './Navbar.css';
 
-const Navbar = () => {
+const NavBar = () => {
     const { user } = useContext(Context);
+    const navigate = useNavigate();
 
-    const logOut = () => {
-        user.setUser({});
-        user.setIsAuth(false);
-        localStorage.removeItem('token');
+    const logOut = async () => {
+        try {
+            await userAPI.logout();
+            user.logout();
+            navigate(MAIN_ROUTE);
+        } catch (e) {
+            console.error('Ошибка при выходе:', e);
+        }
     };
 
     return (
@@ -64,4 +70,4 @@ const Navbar = () => {
     );
 };
 
-export default Navbar;
+export default NavBar;

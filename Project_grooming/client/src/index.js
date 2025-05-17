@@ -1,18 +1,16 @@
-import React, { createContext } from 'react';
-import { createRoot } from 'react-dom/client';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import App from './App';
 import UserStore from './store/UserStore';
 import ServiceStore from './store/ServiceStore';
+import { Context } from './context';
 
-export const Context = createContext(null);
+const root = ReactDOM.createRoot(document.getElementById('root'));
 
-const container = document.getElementById('root');
-const root = createRoot(container);
 root.render(
   <Context.Provider value={{
     user: new UserStore(),
     service: new ServiceStore()
-
   }}>
     <App />
   </Context.Provider>

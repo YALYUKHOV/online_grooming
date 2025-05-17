@@ -4,24 +4,28 @@ const ApiError = require('../error/ApiError');
 class AppointmentController{
   async create(req, res, next) {
     try {
-      const { date_time, employee_id, schedule_id, service_ids } = req.body;
-      const client_id = req.user.id; // Получаем ID клиента из токена
-
-      // Проверяем существование мастера
-      const employee = await Employee.findByPk(employee_id);
-      if (!employee) {
-        return next(ApiError.badRequest('Мастер не найден'));
-      }
+      const { schedule_id, service_ids } = req.body;
+      const client_id = req.user.id;
 
       // Проверяем существование расписания
-      const schedule = await Schedule.findByPk(schedule_id);
+      const schedule = await Schedule.findOne({
+        where: {
+          id: schedule_id,
+          is_available: true
+        }
+      });
+
       if (!schedule) {
-        return next(ApiError.badRequest('Расписание не найдено'));
+        return next(ApiError.badRequest('Выбранное время недоступно'));
       }
 
-      // Проверяем, что выбранный мастер соответствует мастеру в расписании
-      if (schedule.employee_id !== employee_id) {
-        return next(ApiError.badRequest('Выбранный мастер не соответствует мастеру в расписании'));
+      // Проверяем, не занято ли время
+      const existingAppointment = await Appointment.findOne({
+        where: { schedule_id }
+      });
+
+      if (existingAppointment) {
+        return next(ApiError.badRequest('Выбранное время уже занято'));
       }
 
       // Проверяем существование услуг
@@ -35,25 +39,13 @@ class AppointmentController{
         return next(ApiError.badRequest('Одна или несколько услуг не найдены'));
       }
 
-      // Проверяем доступность времени
-      const existingAppointment = await Appointment.findOne({
-        where: {
-          schedule_id,
-          employee_id
-        }
-      });
-
-      if (existingAppointment) {
-        return next(ApiError.badRequest('Это время уже занято'));
-      }
-
       // Создаем запись
       const appointment = await Appointment.create({
-        date_time,
+        date_time: schedule.date_time,
         client_id,
-        employee_id,
+        employee_id: schedule.employee_id,
         schedule_id,
-        status: 'запланировано'
+        status: 'pending'
       });
 
       // Добавляем услуги к записи
@@ -68,7 +60,7 @@ class AppointmentController{
           },
           {
             model: Employee,
-            attributes: ['id', 'name', 'position']
+            attributes: ['id', 'name']
           }
         ]
       });
@@ -163,6 +155,71 @@ class AppointmentController{
       return res.json(updatedAppointment);
     } catch (e) {
       console.error('Ошибка при обновлении записи:', e);
+      return next(ApiError.internal(e.message));
+    }
+  }
+
+  // Получение доступных дат
+  async getAvailableDates(req, res, next) {
+    try {
+      // Получаем все записи в расписании
+      const schedules = await Schedule.findAll({
+        where: {
+          is_available: true
+        },
+        include: [{
+          model: Employee,
+          attributes: ['id', 'name']
+        }],
+        order: [['date_time', 'ASC']]
+      });
+
+      // Получаем все существующие записи
+      const appointments = await Appointment.findAll({
+        attributes: ['schedule_id']
+      });
+
+      // Создаем множество занятых расписаний
+      const bookedScheduleIds = new Set(appointments.map(a => a.schedule_id));
+
+      // Фильтруем доступные даты
+      const availableDates = schedules
+        .filter(schedule => !bookedScheduleIds.has(schedule.id))
+        .map(schedule => ({
+          id: schedule.id,
+          date_time: schedule.date_time,
+          employee: schedule.Employee
+        }));
+
+      return res.json({ dates: availableDates });
+    } catch (e) {
+      next(ApiError.badRequest(e.message));
+    }
+  }
+
+  // Получение записей пользователя
+  async getUserAppointments(req, res, next) {
+    try {
+      const client_id = req.user.id;
+      
+      const appointments = await Appointment.findAll({
+        where: { client_id },
+        include: [
+          {
+            model: Service,
+            through: { attributes: [] }
+          },
+          {
+            model: Employee,
+            attributes: ['id', 'name']
+          }
+        ],
+        order: [['date_time', 'DESC']]
+      });
+
+      return res.json(appointments);
+    } catch (e) {
+      console.error('Ошибка при получении записей пользователя:', e);
       return next(ApiError.internal(e.message));
     }
   }

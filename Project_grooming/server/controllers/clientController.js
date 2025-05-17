@@ -25,30 +25,35 @@ const generateRefreshToken = () => {
 class UserController{
   // Регистрация нового пользователя в системе
   async registration(req, res, next) {
-    const { phone, name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return next(ApiError.badRequest('Некорректный email или password'));
-    }
-    const candidate = await Client.findOne({ where: { email } });
-    if (candidate) {
-      return next(ApiError.badRequest('Пользователь с таким email уже существует'));
-    }
-    const hashPassword = await bcrypt.hash(password, 5);
-    const user = await Client.create({ name, email, phone, password: hashPassword });
-    
-    const accessToken = generateAccessToken(user.id, user.name, user.email, user.phone);
-    const refreshToken = generateRefreshToken();
-    
-    await RefreshToken.create({
-      token: refreshToken,
-      createdAt: new Date(),
-      clientId: user.id
-    });
+    try {
+      const { phone, name, email, password } = req.body;
+      if (!name || !email || !password) {
+        return next(ApiError.badRequest('Некорректный email или password'));
+      }
+      const candidate = await Client.findOne({ where: { email } });
+      if (candidate) {
+        return next(ApiError.badRequest('Пользователь с таким email уже существует'));
+      }
+      const hashPassword = await bcrypt.hash(password, 5);
+      const user = await Client.create({ name, email, phone, password: hashPassword });
+      
+      const accessToken = generateAccessToken(user.id, user.name, user.email, user.phone);
+      const refreshToken = generateRefreshToken();
+      
+      await RefreshToken.create({
+        token: refreshToken,
+        createdAt: new Date(),
+        clientId: user.id
+      });
 
-    return res.json({
-      accessToken,
-      refreshToken
-    });
+      return res.json({
+        accessToken,
+        refreshToken
+      });
+    } catch (e) {
+      console.error('Ошибка при регистрации:', e);
+      return next(ApiError.internal(e.message));
+    }
   }
 
   // Вход пользователя в систему
@@ -80,8 +85,26 @@ class UserController{
 
   // Проверка авторизации пользователя
   async check(req, res, next) {
-    const token = generateAccessToken(req.user.id, req.user.name, req.user.email, req.user.phone);
-    return res.json({token});
+    try {
+      const user = await Client.findByPk(req.user.id);
+      if (!user) {
+        return next(ApiError.unauthorized('Пользователь не найден'));
+      }
+      
+      const token = generateAccessToken(user.id, user.name, user.email, user.phone);
+      return res.json({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role
+        }
+      });
+    } catch (e) {
+      return next(ApiError.internal(e.message));
+    }
   }
 
   // Изменение пароля пользователя
@@ -136,10 +159,10 @@ class UserController{
   // Получение всех записей клиента
   async getClientAppointments(req, res, next) {
     try {
-      const { id } = req.params;
+      const clientId = req.user.id;
       
       const appointments = await Appointment.findAll({
-        where: { client_id: id },
+        where: { client_id: clientId },
         include: [
           {
             model: Service,

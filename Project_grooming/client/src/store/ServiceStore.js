@@ -1,4 +1,9 @@
 import { makeAutoObservable } from "mobx";
+import strijka from '../image/strijka.jpg';
+import mitie from '../image/mitie.jpg';
+import trimming from '../image/trimming.jpg';
+import ears from '../image/ears.jpg';
+import nails from '../image/kogti.jpg';
 
 export default class ServiceStore{
     constructor(){
@@ -8,35 +13,35 @@ export default class ServiceStore{
                 name: 'Стрижка',
                 description: 'Классическая стрижка для собак',
                 price: 1000.00,
-                img: 'https://example.com/strizhka.jpg'
+                img: strijka
             },
             {
                 id: 2,
                 name: 'Мытье',
                 description: 'Комплексное мытье с шампунем',
                 price: 500.00,
-                img: 'https://example.com/mytie.jpg'
+                img: mitie
             },
             {
                 id: 3,
                 name: 'Тримминг',
                 description: 'Выщипывание шерсти для жесткошерстных пород',
                 price: 1500.00,
-                img: 'https://example.com/trimming.jpg'
+                img: trimming
             },
             {
                 id: 4,
                 name: 'Чистка ушей',
                 description: 'Гигиеническая чистка ушей',
                 price: 300.00,
-                img: 'https://example.com/ears.jpg'
+                img: ears
             },
             {
                 id: 5,
                 name: 'Стрижка когтей',
                 description: 'Аккуратная стрижка когтей',
                 price: 200.00,
-                img: 'https://example.com/nails.jpg'
+                img: nails
             }
         ];
         this._user = {

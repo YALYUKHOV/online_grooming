@@ -1,108 +1,120 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { LOGIN_ROUTE, REGISTRATION_ROUTE } from '../utils/consts';
+import React, { useState, useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { LOGIN_ROUTE, MAIN_ROUTE } from '../utils/consts';
+import { Context } from '../context';
+import { userAPI } from '../http/userAPI';
 import './Auth.css';
 
 const Auth = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user } = useContext(Context);
     const isLogin = location.pathname === LOGIN_ROUTE;
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        middleName: '',
-        phone: '',
         email: '',
-        password: ''
+        password: '',
+        name: '',
+        phone: ''
     });
+    const [error, setError] = useState('');
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Здесь будет логика отправки данных на сервер
-        console.log('Form data:', formData);
+        setError('');
+
+        try {
+            let response;
+            if (isLogin) {
+                response = await userAPI.login(formData.email, formData.password);
+                localStorage.setItem('token', response.token);
+            } else {
+                response = await userAPI.registration(
+                    formData.email,
+                    formData.password,
+                    formData.name,
+                    formData.phone
+                );
+                localStorage.setItem('token', response.token);
+            }
+
+            // Получаем информацию о пользователе
+            const userInfo = await userAPI.check();
+            user.setUser(userInfo.user);
+            user.setIsAuth(true);
+            navigate(MAIN_ROUTE);
+        } catch (e) {
+            setError(e.response?.data?.message || 'Произошла ошибка');
+        }
     };
 
     return (
         <div className="auth-container">
-            <div className="auth-form">
+            <form className="auth-form" onSubmit={handleSubmit}>
                 <h2>{isLogin ? 'Вход' : 'Регистрация'}</h2>
-                <form onSubmit={handleSubmit}>
-                    {!isLogin ? (
-                        <>
-                            <div className="form-group">
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    placeholder="Имя"
-                                    required
-                                />
-                            </div>
-                            <div className="form-group">
-                                <input
-                                    type="text"
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    placeholder="Фамилия"
-                                    required
-                                />
-                            </div>
-                            <div className="form-group">
-                                <input
-                                    type="text"
-                                    name="middleName"
-                                    value={formData.middleName}
-                                    onChange={handleChange}
-                                    placeholder="Отчество"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    placeholder="Номер телефона"
-                                    required
-                                    pattern="[0-9]{10}"
-                                />
-                            </div>
-                        </>
-                    ) : null}
-                    <div className="form-group">
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="Email"
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Пароль"
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="submit-button">
-                        {isLogin ? 'Войти' : 'Зарегистрироваться'}
-                    </button>
-                </form>
-            </div>
+                {error && <div className="error-message">{error}</div>}
+                
+                {!isLogin && (
+                    <>
+                        <div className="form-group">
+                            <label htmlFor="name">Имя</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="phone">Телефон</label>
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </>
+                )}
+                
+                <div className="form-group">
+                    <label htmlFor="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+                
+                <div className="form-group">
+                    <label htmlFor="password">Пароль</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+
+                <button type="submit" className="auth-button">
+                    {isLogin ? 'Войти' : 'Зарегистрироваться'}
+                </button>
+            </form>
         </div>
     );
 };

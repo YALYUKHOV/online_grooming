@@ -6,7 +6,7 @@ const employeeRoutes = require('./employeeRoutes');
 const scheduleRoutes = require('./scheduleRoutes');
 const serviceRoutes = require('./serviceRoutes');
 
-
+// Основные роуты
 router.use('/appointment', appointmentRoutes);
 router.use('/client', clientRoutes);
 router.use('/employee', employeeRoutes);

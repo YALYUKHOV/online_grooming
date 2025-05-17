@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import HeroSection from '../components/HeroSection';
 import Features from '../components/Features';
 import './MainPage.css';
+import about from '../image/bigudi.jpg';
+import result1 from '../image/result1.jpg';
+import result2 from '../image/result2.jpg';
 
 const MainPage = () => {
     const testimonials = [
@@ -38,7 +41,7 @@ const MainPage = () => {
                         <Link to="/services" className="about-button">Наши услуги</Link>
                     </div>
                     <div className="about-image">
-                        {/* Здесь можно добавить изображение салона */}
+                        <img src={about} alt="about" />
                     </div>
                 </div>
             </section>
@@ -48,10 +51,13 @@ const MainPage = () => {
                 <h2>Наши работы</h2>
                 <div className="gallery-grid">
                     {/* Здесь будут миниатюры работ */}
-                    <div className="gallery-item">До</div>
-                    <div className="gallery-item">После</div>
-                    <div className="gallery-item">До</div>
-                    <div className="gallery-item">После</div>
+                    <div className="gallery-item">
+                        <img src={result1} alt="result1" />
+                    </div>
+                    <div className="gallery-item">
+                        <img src={result2} alt="result2" />
+                    </div>
+                    
                 </div>
             </section>
 

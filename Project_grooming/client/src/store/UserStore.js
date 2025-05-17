@@ -22,4 +22,11 @@ export default class UserStore{
     get user(){
         return this._user;
     }
+
+    logout() {
+        this._isAuth = false;
+        this._user = {};
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+    }
 }

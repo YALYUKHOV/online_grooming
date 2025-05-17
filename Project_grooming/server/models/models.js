@@ -36,6 +36,10 @@ const Appointment = sequelize.define("Appointment", {
   const Schedule = sequelize.define("Schedule", {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     date_time: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    is_available: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+    }
   }, {
     timestamps: true
   })
@@ -43,8 +47,13 @@ const Appointment = sequelize.define("Appointment", {
   const Service = sequelize.define("Service", {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     name: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.STRING },
-    price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    description: { type: DataTypes.TEXT, allowNull: false },
+    price: { type: DataTypes.INTEGER, allowNull: false },
+    duration: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        comment: 'Длительность услуги в минутах'
+    },
     img: { type: DataTypes.STRING, allowNull: true },
   })
 
